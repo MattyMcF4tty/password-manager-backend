@@ -1,57 +1,21 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	supa "github.com/nedpals/supabase-go"
 )
 
-type User struct {
-	Name string `bson:"name"`
-}
-  
 func main() {
-    // Use the SetServerAPIOptions() method to set the Stable API version to 1
-    serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-    opts := options.Client().ApplyURI("mongodb+srv://matthiaskristensen:Lule1167@go-x-mongodb.pzqixft.mongodb.net/?retryWrites=true&w=majority").SetServerAPIOptions(serverAPI)
+  supabaseUrl := "https://lfzkmvojietwzqsrphid.supabase.co"
+  supabaseKey := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxmemttdm9qaWV0d3pxc3JwaGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTkzNTY2NzMsImV4cCI6MjAxNDkzMjY3M30.mF80rqrlnvKJwdA0mq5TDpZihXoy1815RVm-lSceUAM"
+  supabase := supa.CreateClient(supabaseUrl, supabaseKey)
 
-    // Create a new client and connect to the server
-    client, err := mongo.Connect(context.TODO(), opts)
-    if err != nil {
-        panic(err)
-    }
+  var results map[string]interface{}
+  err := supabase.DB.From("Users").Select("*").Single().Execute(&results)
+  if err != nil {
+    panic(err)
+  }
 
-    defer func() {
-        if err = client.Disconnect(context.TODO()); err != nil {
-        panic(err)
-        }
-    }()
-
-    // Send a ping to confirm a successful connection
-    if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
-        panic(err)
-    }
-    fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
-
-    	// Get a handle to the collection
-	db := client.Database("Users")
-    filter := bson.D{{"age", 26}}
-
-    collection := db.Collection("User")
-
-    var result User
-    err = collection.FindOne(context.TODO(), filter).Decode(&result)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            fmt.Println("No documents found with filter:", filter)
-            return
-        }
-        panic(err)
-    }
-
-    fmt.Println("Name of user with age 26 is:", result.Name)
+  fmt.Println(results) // Selected rows
 }
-  
