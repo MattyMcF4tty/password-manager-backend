@@ -1,21 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 
-	supa "github.com/nedpals/supabase-go"
+	"Go-X-Supabase/config"
+	"Go-X-Supabase/routes"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-  supabaseUrl := "https://lfzkmvojietwzqsrphid.supabase.co"
-  supabaseKey := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxmemttdm9qaWV0d3pxc3JwaGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTkzNTY2NzMsImV4cCI6MjAxNDkzMjY3M30.mF80rqrlnvKJwdA0mq5TDpZihXoy1815RVm-lSceUAM"
-  supabase := supa.CreateClient(supabaseUrl, supabaseKey)
+	router := mux.NewRouter()
+	// Set up routes for different functionalities
+	routes.RegisterUserRoutes(router)
 
-  var results map[string]interface{}
-  err := supabase.DB.From("Users").Select("*").Single().Execute(&results)
-  if err != nil {
-    panic(err)
-  }
+	// Get server configuration
+	cfg := config.GetConfig()
 
-  fmt.Println(results) // Selected rows
+	// Start server
+	log.Printf("Server is running on http://%s\n", cfg.ServerAddress)
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, router))
 }
