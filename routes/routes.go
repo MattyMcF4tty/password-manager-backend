@@ -6,9 +6,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func RegisterUserRoutes(router *mux.Router) {
-	router.HandleFunc("/user/getbyid", handlers.HandleGetUserById).Methods("GET")
+func RegisterRoutes(router *mux.Router) {
+	//Auth
+	router.HandleFunc("/auth/signin", handlers.HandleSignInUser).Methods("POST")
+	router.HandleFunc("/auth/signup", handlers.HandleSignUpUser).Methods("POST")
+	//	router.HandleFunc("/auth/signout", handlers.HandleGetUserById).Methods("GET")
 
-	router.HandleFunc("/user/getPasswords", handlers.HandleGetPasswords).Methods("GET")
-	// ... register other user routes
+	//Passwords
+	router.HandleFunc("/passwords/get", handlers.HandleGetPasswords).Methods("GET")
+	router.HandleFunc("/passwords/create", handlers.HandleCreatePassword).Methods("POST")
 }
