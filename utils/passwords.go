@@ -1,13 +1,21 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 
 	"Go-X-Supabase/supabase"
 )
 
+// Type used to create new password
 type Password struct {
+	Id       int8   `json:"id"`
+	UserId   string `json:"userId"`
+	AppName  string `json:"appName"`
+	Password string `json:"password"`
+}
+
+// Type used to create new password
+type NewPassword struct {
 	UserId   string `json:"userId"`
 	AppName  string `json:"appName"`
 	Password string `json:"password"`
@@ -24,11 +32,11 @@ func GetPasswords(userId string) (*[]Password, error) {
 
 	err := client.DB.From(passwordTable).Select("*").Eq("userId", userId).Execute(&passwords)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching passwords of user:%v. error: %v", userId, err)
+		LogError("Could not fetch passwords of user "+userId, err)
+		return nil, fmt.Errorf("error fetching passwords")
 	}
 
-	fmt.Println("Passwords:", passwords)
-	fmt.Println("Fetched passwords of user:", userId)
+	LogSuccess("Fetched passwords of user:" + userId)
 
 	return &passwords, nil
 }
@@ -38,17 +46,19 @@ func CreatePassword(userId string, appName string, password string) error {
 	//Get supabase client
 	client := supabase.GetClient()
 
-	newPassword := Password{
+	newPassword := NewPassword{
 		UserId:   userId,
 		AppName:  appName,
 		Password: password,
 	}
 
-	err := client.DB.From(passwordTable).Insert(newPassword).Execute(context.Background())
+	var passwords []Password
+	err := client.DB.From(passwordTable).Insert(newPassword).Execute(&passwords)
 	if err != nil {
-		return fmt.Errorf("failed to create new password: %w", err)
+		LogError("Failed to create new password for user"+userId, err)
+		return fmt.Errorf("failed to create new password")
 	}
 
-	fmt.Println("Created new password")
+	LogSuccess("Created new password for user " + userId)
 	return nil
 }

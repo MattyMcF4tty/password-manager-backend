@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"Go-X-Supabase/supabase"
 
@@ -38,7 +39,7 @@ func SignInUser(email string, password string) (*UserCreds, error) {
 		userId:      userData.User.ID,
 	}
 
-	fmt.Println("Signed in user email:", user.Email)
+	log.Println("Signed in user:", user.userId)
 	return &user, nil
 }
 
@@ -55,10 +56,32 @@ func SignUpUser(email string, password string) (*supa.User, error) {
 		Password: password,
 	})
 	if err != nil {
-		return nil, err
+		log.Println("Error signing in up user:", err)
+		return nil, fmt.Errorf("failed to sign up new user")
 	}
 
+	log.Println("Signed up new user:", userData.ID)
 	return userData, nil
+}
+
+// SignOutUser signs out a user using their access token.
+// It returns an error if the sign out process fails.
+func SignOutUser(accessToken string) error {
+	// Get supabase client
+	client := supabase.GetClient()
+
+	// Create a background context
+	ctx := context.Background()
+
+	// Attempt to sign out the user
+	err := client.Auth.SignOut(ctx, accessToken)
+	if err != nil {
+		// Log the error and return it
+		log.Printf("Error signing out user: %v", err)
+		return fmt.Errorf("failed to sign out user")
+	}
+
+	return nil
 }
 
 // Takes an access_token an verifies it.
@@ -68,9 +91,10 @@ func VerifyAccessToken(accessToken string) (*supa.User, error) {
 
 	user, err := client.Auth.User(context.Background(), accessToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify token:%w", err)
+		LogError("Failed to verify access token:", err)
+		return nil, fmt.Errorf("failed to verify authentication")
 	}
 
-	fmt.Println("Verified access token of user:", user.ID)
+	LogSuccess("Verified access token of user: " + user.ID)
 	return user, nil
 }

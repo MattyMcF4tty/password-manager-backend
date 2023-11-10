@@ -10,10 +10,11 @@ import (
 	supa "github.com/nedpals/supabase-go"
 )
 
+// Returns the supabase client if initialized. If not then creates a new one and returns it.
 var client *supa.Client
 
-// Returns the supabase client if initialized. If not then creates a new one and returns it.
 func GetClient() *supa.Client {
+
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v\n", err)
 	}
