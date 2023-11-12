@@ -15,4 +15,5 @@ func RegisterRoutes(router *mux.Router) {
 	//Passwords
 	router.HandleFunc("/passwords/get", handlers.HandleGetPasswords).Methods("GET")
 	router.HandleFunc("/passwords/create", handlers.HandleCreatePassword).Methods("POST")
+	router.HandleFunc("/passwords/delete", handlers.HandleDeletePassword).Methods("DELETE")
 }

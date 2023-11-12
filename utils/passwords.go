@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 
 	"Go-X-Supabase/supabase"
 )
@@ -9,7 +10,6 @@ import (
 // Type used to create new password
 type Password struct {
 	Id       int8   `json:"id"`
-	UserId   string `json:"userId"`
 	AppName  string `json:"appName"`
 	Password string `json:"password"`
 }
@@ -36,7 +36,7 @@ func GetPasswords(userId string) (*[]Password, error) {
 		return nil, fmt.Errorf("error fetching passwords")
 	}
 
-	LogSuccess("Fetched passwords of user:" + userId)
+	LogSuccess("Fetched passwords of user: " + userId)
 
 	return &passwords, nil
 }
@@ -52,8 +52,9 @@ func CreatePassword(userId string, appName string, password string) error {
 		Password: password,
 	}
 
-	var passwords []Password
-	err := client.DB.From(passwordTable).Insert(newPassword).Execute(&passwords)
+	var result []struct{} // Empty struct to satisfy the method signature
+
+	err := client.DB.From(passwordTable).Insert(newPassword).Execute(&result)
 	if err != nil {
 		LogError("Failed to create new password for user"+userId, err)
 		return fmt.Errorf("failed to create new password")
@@ -61,4 +62,27 @@ func CreatePassword(userId string, appName string, password string) error {
 
 	LogSuccess("Created new password for user " + userId)
 	return nil
+}
+
+func DeletePassword(userId string, passwordId int8) error {
+	client := supabase.GetClient()
+
+	// Convert passwordId from int8 to string
+	passwordStr := strconv.FormatInt(int64(passwordId), 10)
+
+	var result struct{} // Empty struct to satisfy the method signature
+
+	// Execute the delete operation and check for errors
+	err := client.DB.From(passwordTable).Delete().Eq("id", passwordStr).Execute(&result)
+	if err != nil {
+		LogError("Failed to delete password: "+passwordStr, err)
+		return fmt.Errorf("failed to delete password: %w", err)
+	}
+
+	LogSuccess("Deleted password: " + passwordStr)
+	return nil
+}
+
+func GetPassword(passwordId int8) {
+
 }
