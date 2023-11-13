@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"strconv"
 
 	"Go-X-Supabase/supabase"
 )
@@ -10,6 +9,7 @@ import (
 // Type used to create new password
 type Password struct {
 	Id       int8   `json:"id"`
+	UserId   string `json:"userId"`
 	AppName  string `json:"appName"`
 	Password string `json:"password"`
 }
@@ -68,21 +68,47 @@ func DeletePassword(userId string, passwordId int8) error {
 	client := supabase.GetClient()
 
 	// Convert passwordId from int8 to string
-	passwordStr := strconv.FormatInt(int64(passwordId), 10)
-
-	var result struct{} // Empty struct to satisfy the method signature
-
-	// Execute the delete operation and check for errors
-	err := client.DB.From(passwordTable).Delete().Eq("id", passwordStr).Execute(&result)
+	password, err := GetPassword(passwordId)
 	if err != nil {
-		LogError("Failed to delete password: "+passwordStr, err)
-		return fmt.Errorf("failed to delete password: %w", err)
+		LogError("Failed to delete password "+IntToString(int64(passwordId)), err)
+		return fmt.Errorf("failed to delete password")
 	}
 
-	LogSuccess("Deleted password: " + passwordStr)
+	if userId != password.UserId {
+		LogWarning("User " + userId + " tried to delete password " + IntToString(int64(passwordId)) + " which does not belong to user")
+		return fmt.Errorf("You can't delete a password thats not yours")
+	}
+
+	// Request needs struct to finish
+	var filler struct{}
+	err = client.DB.From(passwordTable).Delete().Eq("id", IntToString(int64(passwordId))).Execute(filler)
+	if err != nil {
+		LogError("Failed to delete password", err)
+		return fmt.Errorf("failed to delete password")
+	}
+
+	LogSuccess("Deleted password: " + IntToString(int64(passwordId)))
 	return nil
 }
 
-func GetPassword(passwordId int8) {
+func GetPassword(passwordId int8) (*Password, error) {
+	// Get supabase client
+	client := supabase.GetClient()
 
+	passwordIdStr := IntToString(int64(passwordId))
+
+	var passwords []Password // Use a slice of Password
+	err := client.DB.From(passwordTable).Select().Limit(1).Eq("id", passwordIdStr).Execute(&passwords)
+	if err != nil {
+		LogError("Failed to fetch password "+passwordIdStr, err)
+		return nil, fmt.Errorf("failed to fetch password: %w", err)
+	}
+
+	if len(passwords) == 0 {
+		// No password found with the given ID
+		return nil, nil
+	}
+
+	LogSuccess("Fetched password " + passwordIdStr)
+	return &passwords[0], nil // Return the first element of the slice
 }
