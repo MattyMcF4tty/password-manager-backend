@@ -112,3 +112,29 @@ func GetPassword(passwordId int8) (*Password, error) {
 	LogSuccess("Fetched password " + passwordIdStr)
 	return &passwords[0], nil // Return the first element of the slice
 }
+
+func UpdatePassword(newPassword Password) error {
+	client := supabase.GetClient()
+
+	passwordId := IntToString(int64(newPassword.Id))
+
+	prevPassword, err := GetPassword(newPassword.Id)
+	if err != nil {
+		return err
+	}
+
+	if prevPassword.UserId != newPassword.UserId {
+		LogWarning("User " + newPassword.UserId + " tried to update password " + passwordId + ". Which belongs to user " + prevPassword.UserId)
+		return fmt.Errorf("Password does not belong to user")
+	}
+
+	var result []struct{}
+	err = client.DB.From(passwordTable).Update(newPassword).Eq("id", passwordId).Execute(&result)
+	if err != nil {
+		LogError("Failed to update password "+passwordId, err)
+		return fmt.Errorf("failed to update password")
+	}
+
+	LogSuccess("Updated password " + passwordId)
+	return nil
+}
